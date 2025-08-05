@@ -1,7 +1,7 @@
 from flask import render_template, request, url_for, redirect
 from models.database import db, Game, Console
-import urllib
-import json
+import urllib # Permite ler a url de uma API
+import json # Faz a conversão de dados para JSON em um dicionário de dados
 
 # Lista de jogadores
 jogadores = ['Miguel José', 'Miguel Isack', 'Leaf',
@@ -121,3 +121,11 @@ def init_app(app):
             db.session.commit()
             return redirect(url_for('consolesEstoque'))
         return render_template('editconsole.html', console=console)
+
+    # Rota de catálogo de jogos (Consumo da API)
+    @app.route("/apigames", methods=['GET', 'POST'])
+    def apigames():
+        BASE_URL = "https://www.freetogame.com/api"
+        response = urllib.request.urlopen(BASE_URL + "/games") # URL PESQUISADA: "https://www.freetogame.com/api/games"
+        return response
+        
