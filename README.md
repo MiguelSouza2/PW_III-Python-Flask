@@ -17,9 +17,9 @@ Instale a versão mais recente do Python em https://www.python.org/
 ```
 pip install flask
 
-pip install pymsql
+pip install pymysql
 
-pip install flask-alchemy
+pip install flask-sqlalchemy
 
 pip install mysqlclient
 ```
