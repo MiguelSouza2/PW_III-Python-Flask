@@ -1,10 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
 {% for games in gameList %}
-    <p>Título: {{games.title}}</p>
-    <img src="{{games.thumbnail}}">
-    <p>Gênero: {{games.genre}}</p>
-    <p>Plataforma: {{games.platform}}</p>
+    <div style="border: 1px #000;">
+            <p>Título: {{games.title}}</p>
+        <img src="{{games.thumbnail}}">
+        <p>Gênero: {{games.genre}}</p>
+        <p>Plataforma: {{games.platform}}</p>
+        <div>
+            <strong>Jogar agora: </strong>
+            <a href="{{games.game_url}}">Play now</a>
+        </div>
+    </div>
 {% endfor %}
 
 {% endblock content %}
