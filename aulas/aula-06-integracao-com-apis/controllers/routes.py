@@ -127,5 +127,7 @@ def init_app(app):
     def apigames():
         BASE_URL = "https://www.freetogame.com/api"
         response = urllib.request.urlopen(BASE_URL + "/games") # URL PESQUISADA: "https://www.freetogame.com/api/games"
-        return response
+        apiData = response.read() # lê a resposta da API
+        gameList = json.loads(apiData) # converte JSON para dicionário
+        return render_template("apigames.html", gameList=gameList)
         

@@ -1,0 +1,10 @@
+{% extends 'base.html' %}
+{% block content %}
+{% for games in gameList %}
+    <p>Título: {{games.title}}</p>
+    <img src="{{games.thumbnail}}">
+    <p>Gênero: {{games.genre}}</p>
+    <p>Plataforma: {{games.platform}}</p>
+{% endfor %}
+
+{% endblock content %}
