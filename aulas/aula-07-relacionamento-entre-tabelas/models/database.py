@@ -28,9 +28,10 @@ class Game(db.Model):
     # criando o relacionamento entre as tabelas
     console = db.relationship('Console', backref=db.backref('game', lazy=True))
 
-    def __init__(self, titulo, ano, categoria, preco, quantidade):
+    def __init__(self, titulo, ano, categoria, preco, quantidade, console_id):
         self.titulo = titulo
         self.ano = ano
         self.categoria = categoria
         self.preco = preco
         self.quantidade = quantidade
+        self.console_id = console_id

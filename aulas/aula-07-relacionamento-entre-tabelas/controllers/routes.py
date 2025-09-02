@@ -51,7 +51,7 @@ def init_app(app):
         # Cadastra um novo jogo
         if request.method == 'POST':
             newgame = Game(request.form['titulo'], request.form['ano'], request.form['categoria'],
-                           request.form['preco'], request.form['quantidade'])
+                           request.form['preco'], request.form['quantidade'], request.form['console'])
             db.session.add(newgame)
             db.session.commit()
             return redirect(url_for('gamesEstoque'))
@@ -64,8 +64,10 @@ def init_app(app):
             # Faz um SELECT no banco a partir da pagina informada (page)
             # Filtrando os registro de 3 em 3 (per_page)
             games_page = Game.query.paginate(page=page, per_page=per_page)
-                       
-            return render_template('gamesestoque.html', gamesestoque=games_page)
+            
+            consoles = Console.query.all()
+            
+            return render_template('gamesestoque.html', gamesestoque=games_page, consoles=consoles)
 
     # CRUD GAMES - EDIÇÃO
     @app.route('/games/edit/<int:id>', methods=['GET', 'POST'])
