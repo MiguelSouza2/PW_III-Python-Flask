@@ -1,7 +1,8 @@
-from flask import render_template, request, url_for, redirect
-from models.database import db, Game, Console
-import urllib # Permite ler a url de uma API
-import json # Faz a conversão de dados para JSON em um dicionário de dados
+from flask import render_template, request, url_for, session, flash, redirect
+from models.database import db, Game, Console, Usuario
+import urllib # Permitir ler URL das APIS
+import json # Conversão de dados
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # Lista de jogadores
 jogadores = ['Miguel José', 'Miguel Isack', 'Leaf',
@@ -11,7 +12,20 @@ gamelist = [{'Título': 'CS-GO', 'Ano': 2012, 'Categoria': 'FPS Online'}]
 
 
 def init_app(app):
-    @app.route('/')
+    # Implementando o MIDDLEWARE para a checagem de autenticação
+    @app.before_request
+    def check_auth():
+        # Rotas que não precisam de autenticação
+        routes = ['home', 'login', 'caduser']
+        # Se a rota atual não precisar de autenticação, o sistema permite o acesso
+        if request.endpoint in routes or request.path.startswith('/static/'):
+            return
+        
+        # Se o usuário não estiver logado, redireciona para a página de login
+        if 'user_id' not in session:
+            return redirect(url_for('login'))
+        
+    @app.route('/') # Decorator
     def home():
         return render_template('index.html')
 
@@ -66,7 +80,7 @@ def init_app(app):
             games_page = Game.query.paginate(page=page, per_page=per_page)
             
             consoles = Console.query.all()
-            
+                       
             return render_template('gamesestoque.html', gamesestoque=games_page, consoles=consoles)
 
     # CRUD GAMES - EDIÇÃO
@@ -78,11 +92,14 @@ def init_app(app):
             g.titulo = request.form['titulo']
             g.ano = request.form['ano']
             g.categoria = request.form['categoria']
+            
             g.console_id = request.form['console']
+            
             g.preco = request.form['preco']
             g.quantidade = request.form['quantidade']
             db.session.commit()
             return redirect(url_for('gamesEstoque'))
+        
         consoles = Console.query.all()
         return render_template('editgame.html', g=g, consoles=consoles)
 
@@ -125,28 +142,74 @@ def init_app(app):
             db.session.commit()
             return redirect(url_for('consolesEstoque'))
         return render_template('editconsole.html', console=console)
-
-    # Rota de catálogo de jogos (Consumo da API)
-    @app.route("/apigames", methods=['GET', 'POST'])
+    
+    # ROTA de Catálogo de Jogos (Consumo da API)
+    @app.route('/apigames', methods=['GET', 'POST'])
     @app.route('/apigames/<int:id>', methods=['GET', 'POST'])
-    def apigames(id=None):       
-        BASE_URL = "https://www.freetogame.com/api"
-        response = urllib.request.urlopen(BASE_URL + "/games") # URL PESQUISADA: "https://www.freetogame.com/api/games"
-        apiData = response.read() # lê a resposta da API
-        gameList = json.loads(apiData) # converte JSON para dicionário
-            
+    def apigames(id=None):
+        urlApi = 'https://www.freetogame.com/api/games'
+        response = urllib.request.urlopen(urlApi)
+        apiData = response.read()
+        listaJogos = json.loads(apiData)
         # Buscando o jogo individual na lista de jogos
         if id:
             gameInfo = []
-            for game in gameList:
-                if game['id'] == id:
-                    gameInfo = game
+            for jogo in listaJogos:
+                if jogo['id'] == id:
+                    gameInfo = jogo
                     break
-                
             if gameInfo:
-                return render_template("gameinfo.html", gameInfo=gameInfo)
+                return render_template('gameinfo.html', gameInfo=gameInfo)
             else:
-                return f'Não foi possível encontrar o nome com esse ID: {id}!'
+                return f'Game com a ID {id} não foi encontrado.'        
+        return render_template('apigames.html', listaJogos=listaJogos)
+
+    # ROTA de LOGIN
+    @app.route('/login', methods=['GET', 'POST'])
+    def login():
+        if request.method == 'POST':
+            email = request.form.get('email')
+            senha = request.form.get('senha')
+            
+            user = Usuario.query.filter_by(email=email).first()
+            if user and check_password_hash(user.senha, senha):
+                # criando a sessão do usuario
+                session['user_id'] = user.id
+                session['user_email'] = user.email
                 
-        return render_template("apigames.html", gameList=gameList)
-        
+                flash(f"Login bem sucedido! Seja bem-vindo(a) {user.nome}", 'success')
+                return redirect(url_for('home'))
+            else:
+                flash('Falha no login! Verifique o email e a senha.', 'danger')
+                return redirect(url_for('login'))
+        return render_template('login.html')
+    
+    
+    # ROTA de LOGOUT
+    @app.route('/logout', methods=['GET', 'POST'])
+    def logout():
+        session.clear()
+        flash('Você saiu da sua conta com sucesso!', 'warning')
+        return redirect(url_for('home'))
+    
+    # ROTA de CADASTRO
+    @app.route('/caduser', methods=['GET', 'POST'])
+    def caduser():
+        if request.method == 'POST':
+            nome = request.form.get('nome')
+            email = request.form.get('email')
+            senha = request.form.get('senha')
+            hashed_password = generate_password_hash(senha, method='scrypt')
+           
+            user = Usuario.query.filter_by(email=email).first()
+            if user:
+                flash('Email já cadastrado! Tente outro email.', 'danger')
+                return redirect(url_for('login'))
+            else:
+                new_user = Usuario(nome=nome, email=email, senha=hashed_password)
+                db.session.add(new_user)
+                db.session.commit()
+                flash('Usuário cadastrado com sucesso! Faça o login.', 'success')
+                return redirect(url_for('login'))
+
+        return render_template('caduser.html')

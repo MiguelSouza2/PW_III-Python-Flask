@@ -1,0 +1,32 @@
+<h2>Bem-vindo a página da Galeria</h2>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+{% for category, message in messages %}
+<div class="alert alert-{{ category }}">
+{{ message }}
+</div>
+{% endfor %}
+{% endwith %}
+
+<hr>
+<h2 style="text-align: center;">Galeria</h2><br>
+<div class="row">
+{% for img in imagens %}
+<div class="col-md-3 m-auto">
+<img src="/static/uploads/{{img.url}}" alt="{{img.alt}}" class="img-thumbnail">
+</div>
+{% endfor %}
+
+
+<hr>
+
+<section class="more-image-section">
+    <form action="{#{url_for('gallery')}#}" method="POST" enctype="multipart/form-data">
+        <label for="img_file">Insira uma imagem...</label>
+        <input type="file" name="img_file" id="img_file" required>
+        <br>
+        <label for="img_alt">Coloque uma alt para a imagem...</label>
+        <input type="text" name="img_alt">
+        <button>Enviar</button>
+    </form>
+</section>
